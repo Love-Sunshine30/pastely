@@ -11,7 +11,15 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// creating a struct to hold the form data and any error that user may input
+// creating a struch to hold the user sign up form and any error
+type userSignUpForm struct {
+	Name                string `form:"name"`
+	Email               string `form:"email"`
+	Password            string `form:"password"`
+	validator.Validator `form:"-"`
+}
+
+// creating a struct to hold the snippet create and any error that user may input
 type snippetCreateForm struct {
 	Title               string `form:"title"`
 	Content             string `form:"content"`
@@ -105,4 +113,73 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 
 	// Redirect to the created snippet
 	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
+}
+
+// Handler for user sign up form
+func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
+	data := app.newTemplateData(r)
+	data.Form = userSignUpForm{}
+	app.render(w, http.StatusOK, "signup.tmpl.html", data)
+}
+
+// Handler for signing up new user
+func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
+	// Declare a zero-valued instance of the signupForm struc
+	var form userSignUpForm
+
+	// parse the form data to the form struct
+	err := app.decodePostForm(r, &form)
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	// validate the form data
+	form.CheckField(validator.NotBlank(form.Name), "name", "This field cannot be blank!")
+	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank!")
+	form.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "This field must be valid email address")
+	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank!")
+	form.CheckField(validator.MinCharCount(form.Password, 8), "password", "Password must be at least 8 character long.")
+
+	// if the form has any error then re-display the form with 422 status code
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, http.StatusUnprocessableEntity, "signup.tmpl.html", data)
+		return
+	}
+	// Insert the new user to the database
+	err = app.user.Insert(form.Name, form.Email, form.Password)
+	if err != nil {
+		// if error is ErrorDuplicateEmail then we re-display the form with a message
+		if errors.Is(err, models.ErrDuplicateEmail) {
+			form.AddFiledError("email", "This Email is already used!")
+
+			// Re-display the form
+			data := app.newTemplateData(r)
+			data.Form = form
+			app.render(w, http.StatusUnprocessableEntity, "signup.tmpl.html", data)
+		} else {
+			app.serverError(w, err)
+		}
+		return
+	}
+	app.sessionManager.Put(r.Context(), "flash", "You've signed up successfully!")
+	// Redirect to the log in page
+	http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+}
+
+// Handler for login form
+func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
+
+}
+
+// Handler for logining in a user
+func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
+
+}
+
+// Handler for logingin out a user
+func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
+
 }

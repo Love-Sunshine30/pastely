@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"flag"
 	"html/template"
@@ -22,6 +23,7 @@ type application struct {
 	errorLogger    *log.Logger
 	infoLogger     *log.Logger
 	snippets       *models.SnippetModel
+	user           *models.UserModel
 	templateCache  map[string]*template.Template
 	formDecoder    *form.Decoder
 	sessionManager *scs.SessionManager
@@ -74,18 +76,31 @@ func main() {
 		errorLogger:    errorLog,
 		infoLogger:     infoLog,
 		snippets:       &models.SnippetModel{DB: db},
+		user:           &models.UserModel{DB: db},
 		templateCache:  templateCache,
 		formDecoder:    formDecoder,
 		sessionManager: sessionManager,
+	}
+
+	// Initialize a tls.Config struct to hold the non-default TLS settings we
+	// want the server to use. In this case the only thing that we're changing
+	// is the curve preferences value, so that only elliptic curves with
+	// assembly implementations are used.
+	tlsConfig := &tls.Config{
+		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
 	}
 
 	// creating a http server struct to contain everything the server needs to run
 	// it would contain network address, handler, custom logger
 
 	srv := &http.Server{
-		Addr:     *addr,
-		ErrorLog: errorLog,
-		Handler:  app.routes(), // this contains all the routes
+		Addr:         *addr,
+		ErrorLog:     errorLog,
+		Handler:      app.routes(), // this contains all the routes
+		TLSConfig:    tlsConfig,
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 
 	infoLog.Printf("Strating server on port %s", *addr)
