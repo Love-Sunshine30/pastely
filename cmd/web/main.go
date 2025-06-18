@@ -66,6 +66,9 @@ func main() {
 	sessionManager.Store = mysqlstore.New(db)
 	sessionManager.Lifetime = 12 * time.Hour
 
+	// cookie will only be sent over https connection
+	sessionManager.Cookie.Secure = true
+
 	//creating an instance of application struct
 	app := &application{
 		errorLogger:    errorLog,
@@ -86,7 +89,7 @@ func main() {
 	}
 
 	infoLog.Printf("Strating server on port %s", *addr)
-	err = srv.ListenAndServe()
+	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	errorLog.Fatal(err)
 }
 
