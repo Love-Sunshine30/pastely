@@ -11,6 +11,11 @@ import (
 	"github.com/go-playground/form/v4"
 )
 
+// checking if an incoming request is made from a authenticated user or not
+func (app *application) isAuthenticated(r *http.Request) bool {
+	return app.sessionManager.Exists(r.Context(), "authenticationUserId")
+}
+
 // creating a helper that would decode the html form and put the data in repective struct fields
 func (app *application) decodePostForm(r *http.Request, dst any) error {
 	// parse the form
@@ -39,8 +44,9 @@ func (app *application) decodePostForm(r *http.Request, dst any) error {
 // with CurrentYear
 func (app *application) newTemplateData(r *http.Request) *templateData {
 	return &templateData{
-		CurrentYear: time.Now().Year(),
-		Flash:       app.sessionManager.PopString(r.Context(), "flash"),
+		CurrentYear:     time.Now().Year(),
+		Flash:           app.sessionManager.PopString(r.Context(), "flash"),
+		IsAuthenticated: app.isAuthenticated(r),
 	}
 }
 
