@@ -66,7 +66,7 @@ func (m *SnippetModel) Get(id int) (*Snippet, error) {
 	return s, nil
 }
 
-// This will 10 recently created snippets
+// This will return 10 recently created snippets
 func (m *SnippetModel) Latest() ([]*Snippet, error) {
 	// sql query
 	stm := `SELECT id, title, content, created, expires

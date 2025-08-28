@@ -13,7 +13,7 @@ import (
 // variable is more performant than re-parsing the pattern each time we need it.
 var EmailRX = regexp.MustCompile(`^[a-zA-Z0-9.!#$%&'*+/=?^_` + "`" + `{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z]{2,})+$`)
 
-// defie a validator type that contains any fielderrors
+// define a validator type that contains any fielderrors and non-field errors
 type Validator struct {
 	NonFieldErrors []string
 	FieldErrors    map[string]string
@@ -53,7 +53,7 @@ func NotBlank(value string) bool {
 	return strings.TrimSpace(value) != ""
 }
 
-// returns true if char counts is equal less than n
+// returns true if char counts is equal or less than n
 func MaxCharCount(value string, n int) bool {
 	return utf8.RuneCountInString(value) <= n
 }
@@ -73,7 +73,7 @@ func PermittedInt(value int, permittedValues ...int) bool {
 	return false
 }
 
-// return true if a string matches a provided compiled regular expressio pattern
+// return true if a string matches a provided compiled regular expression pattern
 func Matches(value string, rx *regexp.Regexp) bool {
 	return rx.MatchString(value)
 }

@@ -41,7 +41,7 @@ func (app *application) decodePostForm(r *http.Request, dst any) error {
 }
 
 // creating newTemplateData which returns a pointer to the templateData struct initialize
-// with CurrentYear
+// with CurrentYear, any flash message and whether or not the user is authenticated
 func (app *application) newTemplateData(r *http.Request) *templateData {
 	return &templateData{
 		CurrentYear:     time.Now().Year(),

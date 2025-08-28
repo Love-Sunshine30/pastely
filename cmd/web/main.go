@@ -82,7 +82,7 @@ func main() {
 		sessionManager: sessionManager,
 	}
 
-	// Initialize a tls.Config struct to hold the non-default TLS settings we
+	// Initialize a tlsConfig struct to hold the non-default TLS settings we
 	// want the server to use. In this case the only thing that we're changing
 	// is the curve preferences value, so that only elliptic curves with
 	// assembly implementations are used.
